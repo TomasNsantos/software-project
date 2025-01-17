@@ -15,7 +15,7 @@ class ExampleAgent(BaseAgent):
     def manage_targets(self):
         if len(self.targets) == 0:
             return None
-        
+        """"
         # Verifica se há agentes próximos
         for teammate in self.teammates.values():
             if teammate.id != self.id and self.is_too_close(teammate):
@@ -25,7 +25,22 @@ class ExampleAgent(BaseAgent):
                     return alternative_targets[0]
         
         return self.targets[0]
+        """
+        
+         # Distribuição inteligente de alvos: evita múltiplos agentes no mesmo alvo
+        target_scores = {}
+        for target in self.targets:
+            agents_near_target = sum(
+                1 for teammate in self.teammates.values()
+                if Point(teammate.x, teammate.y).dist_to(target) < self.pos.dist_to(target)
+            )
+            # Penaliza alvos com muitos agentes próximos
+            target_scores[target] = self.pos.dist_to(target) + agents_near_target * 2.0
 
+        # Escolhe o alvo com menor pontuação (distância + penalidade)
+        best_target = min(target_scores, key=target_scores.get)
+        return best_target
+        
     def navigate_to_target(self, target):
         target_velocity, target_angle_velocity = Navigation.goToPoint(self.robot, target)
         self.set_vel(target_velocity)
